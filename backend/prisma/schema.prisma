@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum UserRole { STUDENT COMPANY }
+model User {
+  id String @id @default(uuid())
+  email String @unique @db.VarChar(180)
+  passwordHash String @db.VarChar(255)
+  role UserRole
+  name String @db.VarChar(120)
+  student Student?
+  company Company?
+  refreshTokens RefreshToken[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([role])
+}
+model Student {
+  id String @id @default(uuid())
+  userId String @unique
+  university String @db.VarChar(160)
+  graduationYear Int
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model Company {
+  id String @id @default(uuid())
+  userId String @unique
+  companyName String @db.VarChar(160)
+  website String? @db.VarChar(255)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model RefreshToken {
+  id String @id @default(uuid())
+  userId String
+  tokenHash String @unique @db.Char(64)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@index([userId,revokedAt])
+  @@index([expiresAt])
+}
